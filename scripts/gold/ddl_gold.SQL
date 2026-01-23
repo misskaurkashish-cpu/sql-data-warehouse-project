@@ -114,21 +114,24 @@ WHERE rn = 1;
 -- ======================================================================
 -- Create Dimension: gold.fact_sales
 -- ======================================================================
+DROP VIEW IF EXISTS gold.fact_sales;
 
 CREATE view gold.fact_sales as
 SELECT
-    sd.sls_ord_num   AS order_number,
-    pr.product_number,
+    sd.sls_ord_num AS order_number,
+    COALESCE(pr.product_number, 'UNKNOWN') AS product_number,
     cu.customer_key,
-    sd.sls_order_dt  AS order_date,
-    sd.sls_ship_dt   AS shipping_date,
-    sd.sls_due_dt    AS due_date,
-    sd.sls_sales     AS sales_amount,
-    sd.sls_quantity  AS quantity,
-    sd.sls_price     AS price
+    sd.sls_order_dt AS order_date,
+    sd.sls_ship_dt AS shipping_date,
+    sd.sls_due_dt AS due_date,
+    sd.sls_sales AS sales_amount,
+    sd.sls_quantity AS quantity,
+    sd.sls_price AS price
 FROM silver.crm_sales_details sd
 LEFT JOIN gold.dim_product pr
     ON sd.sls_prd_key = pr.product_number
 LEFT JOIN gold.dim_customers cu
     ON sd.sls_cust_id = cu.customer_id;
+ 
+ 
 
