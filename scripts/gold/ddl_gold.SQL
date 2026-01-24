@@ -98,7 +98,7 @@ CREATE VIEW gold.fact_sales AS
 SELECT
     sd.sls_ord_num   AS order_number,
     pr.product_number,
-    cu.customer_key,
+    cu.customer_number,
     sd.sls_order_dt  AS order_date,
     sd.sls_ship_dt   AS shipping_date,
     sd.sls_due_dt    AS due_date,
