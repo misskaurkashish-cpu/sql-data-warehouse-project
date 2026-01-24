@@ -21,51 +21,29 @@ Usage:
 -- Create Dimension: gold.dim_customers
 -- ======================================================================
 
-CREATE VIEW gold.dim_customers AS
+DROP VIEW if exists gold.dim_customers;
+create VIEW gold.dim_customers as
 SELECT
-    ROW_NUMBER() OVER (ORDER BY customer_id) AS customer_key,
-    customer_id,
-    customer_number,
-    first_name,
-    last_name,
-    country,
-    marital_status,
-    gender,
-    birthdate,
-    create_date
-FROM (
-    SELECT
-        ci.cst_id        AS customer_id,
-        ci.cst_key       AS customer_number,
-        ci.cst_firstname AS first_name,
-        ci.cst_lastname  AS last_name,
+    ci.cst_id           AS customer_id,
+    ci.cst_key          AS customer_number,
+    ci.cst_firstname    AS first_name,
+    ci.cst_lastname     AS last_name,
+    la.cntry            AS country,
+    ci.cst_material_status AS marital_status,
+    ci.cst_gndr         AS gender,
+    ca.bdate            AS birthdate,
+    ci.cst_create_date  AS create_date
+FROM silver.crm_cust_info ci
+LEFT JOIN silver.erp_cust_az12 ca
+    ON ci.cst_key = ca.cid
+LEFT JOIN silver.erp_loc_a101 la
+    ON ci.cst_key = la.cid
+WHERE
+    la.cntry IS NOT NULL
+    AND ci.cst_gndr IS NOT NULL
+    AND ci.cst_gndr <> 'n/a'
+    AND ca.bdate IS NOT NULL;
 
-        /* Country */
-        COALESCE(la.cntry, 'UNKNOWN') AS country,
-
-        ci.cst_material_status AS marital_status,
-
-        /* Gender */
-        COALESCE(NULLIF(ci.cst_gndr, 'n/a'), ca.gen, 'n/a') AS gender,
-
-        ca.bdate           AS birthdate,
-        ci.cst_create_date AS create_date,
-
-        /* Dedup */
-        ROW_NUMBER() OVER (
-            PARTITION BY ci.cst_id, ci.cst_key
-            ORDER BY
-                (la.cntry IS NULL),
-                ci.cst_create_date DESC
-        ) AS rn
-
-    FROM silver.crm_cust_info ci
-    LEFT JOIN silver.erp_cust_az12 ca
-        ON ci.cst_key = ca.cid
-    LEFT JOIN silver.erp_loc_a101 la
-        ON ci.cst_key = la.cid
-) t
-WHERE rn = 1;
 
 
 -- ======================================================================
